@@ -1,0 +1,11 @@
+
+heroku apps:create scheduler-mon
+change github repository url
+
+maven pom.xml
+import project into idea
+mvn package
+
+export PORT=5000
+java -cp target/classes:"target/dependency/*" scheduler.SchedulerMon
+git push heroku master

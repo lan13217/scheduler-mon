@@ -1,0 +1,60 @@
+<!doctype html>
+<html ng-app="myApp">
+<head>
+    <title>Scheduler mon</title>
+    <script src="js/angular.js"></script>
+    <script src="js/angular-route.js"></script>
+    <script src="js/ng-service.js"></script>
+    <script>
+    function connectController($scope, $location, schedulerService) {
+        $scope.connect = function() {
+            schedulerService.connect({'host': $scope.host, 'port': $scope.port}, function success(data) {
+                $location.url('/mon');
+            });
+        }
+    }
+
+    function monController($scope, schedulerService) {
+        schedulerService.getTriggers(null, function success(data) {
+            $scope.triggers = data;
+        });
+
+        schedulerService.getJobs(null, function success(data) {
+            $scope.jobs = data;
+        });
+    }
+    </script>
+</head>
+<body>
+    <div ng-view></div>
+
+    <script type="text/ng-template" id="connect">
+        <h3>Welcome to scheduler mon.</h3>
+        <form name="form">
+            <div>
+                <label for="host">host</label>
+                <input type="text" id="host" name="host" ng-model="host"/>
+            </div>
+            <div>
+                <label for="port">port</label>
+                <input type="text" id="port" name="port" ng-model="port"/>
+            </div>
+            <div>
+                <input type="button" name="submit" value="Connect" ng-click="connect()"/>
+            </div>
+        </form>
+    </script>
+
+    <script type="text/ng-template" id="mon">
+        <h3>Monitoring scheduler</h3>
+        <form name="form">
+            <div>
+                {{triggers}}
+            </div>
+            <div>
+                {{jobs}}
+            </div>
+        </form>
+    </script>
+</body>
+</html>
