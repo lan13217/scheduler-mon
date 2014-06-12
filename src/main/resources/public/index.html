@@ -2,30 +2,37 @@
 <html ng-app="myApp">
 <head>
     <title>Scheduler mon</title>
+    <script src="js/jquery-2.1.1.js"></script>
     <script src="js/angular.js"></script>
     <script src="js/angular-route.js"></script>
     <script src="js/ng-service.js"></script>
     <script>
-    function connectController($scope, $location, schedulerService) {
+    function connectController($scope, $location, scheduler) {
         $scope.connect = function() {
-            schedulerService.connect({'host': $scope.host, 'port': $scope.port}, function success(data) {
+            scheduler.connect({'host': $scope.host, 'port': $scope.port}, function success(data) {
                 $location.url('/mon');
             });
         }
     }
 
-    function monController($scope, schedulerService) {
-        schedulerService.getTriggers(null, function success(data) {
+    function monController($scope, scheduler) {
+        scheduler.getTriggers(null, function success(data) {
             $scope.triggers = data;
         });
 
-        schedulerService.getJobs(null, function success(data) {
+        scheduler.getJobs(null, function success(data) {
             $scope.jobs = data;
+        });
+
+        scheduler.getExecutingJobs(function success(data) {
+            $scope.executingJobs = data;
         });
     }
     </script>
 </head>
 <body>
+    <div id="error"></div>
+
     <div ng-view></div>
 
     <script type="text/ng-template" id="connect">

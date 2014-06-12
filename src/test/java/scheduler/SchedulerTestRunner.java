@@ -2,6 +2,7 @@ package scheduler;
 
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
+import scheduler.job.DummyJob;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -47,11 +48,4 @@ public class SchedulerTestRunner {
 
     }
 
-    static class DummyJob implements Job, Serializable {
-
-        @Override
-        public void execute(JobExecutionContext context) throws JobExecutionException {
-            System.out.println("Executed dummy job...");
-        }
-    }
 }

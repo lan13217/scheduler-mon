@@ -3,14 +3,18 @@ package scheduler.proxy.impl;
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
 import org.quartz.impl.matchers.GroupMatcher;
+import scheduler.dto.ExecutingJobDto;
 import scheduler.dto.JobDetailDto;
 import scheduler.dto.TriggerDto;
 import scheduler.proxy.SchedulerService;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Properties;
+
+import static com.google.common.collect.Lists.newArrayList;
+import static java.util.stream.Collectors.toList;
+import static scheduler.util.Exceptions.catchOf;
+import static scheduler.util.Exceptions.tryOf;
 
 public class QuartzSchedulerService implements SchedulerService {
 
@@ -42,20 +46,17 @@ public class QuartzSchedulerService implements SchedulerService {
     @Override
     public Collection<TriggerDto> getTriggers(String triggerName) {
         try {
-            List<TriggerDto> triggerDtos = new ArrayList<>();
             if (triggerName != null) {
-                triggerDtos.add(newTriggerDto(getScheduler().getTrigger(new TriggerKey(triggerName))));
-            }
+                return newArrayList(newTriggerDto(getScheduler().getTrigger(new TriggerKey(triggerName))));
+            } else {
+                return getScheduler().getTriggerKeys(GroupMatcher.<TriggerKey>anyGroup())
+                        .stream()
+                        .map(tryOf(triggerKey -> newTriggerDto(getScheduler().getTrigger(triggerKey))))
+                        .filter(tried -> tried.isSuccess())
+                        .map(tried -> tried.get())
+                        .collect(toList());
 
-            getScheduler().getTriggerKeys(GroupMatcher.<TriggerKey>anyGroup()).forEach(triggerKey -> {
-                // Have to have try catch block here because lamda actually uses annonymous instance.
-                try {
-                    triggerDtos.add(newTriggerDto(getScheduler().getTrigger(triggerKey)));
-                } catch (SchedulerException e) {
-                    throw new RuntimeException(e);
-                }
-            });
-            return triggerDtos;
+            }
         } catch (SchedulerException e) {
             throw new RuntimeException(e);
         }
@@ -64,19 +65,28 @@ public class QuartzSchedulerService implements SchedulerService {
     @Override
     public Collection<JobDetailDto> getJobs(String jobName) {
         try {
-            List<JobDetailDto> jobDetailDtos = new ArrayList<>();
             if (jobName != null) {
-                jobDetailDtos.add(newJobDetailDto(getScheduler().getJobDetail(new JobKey(jobName))));
+                return newArrayList(newJobDetailDto(getScheduler().getJobDetail(new JobKey(jobName))));
+            } else {
+                return getScheduler().getJobKeys(GroupMatcher.<JobKey>anyGroup())
+                        .stream()
+                        .map(catchOf(
+                                jobKey -> newJobDetailDto(getScheduler().getJobDetail(jobKey)),
+                                exception -> {throw new RuntimeException(exception);}))
+                        .collect(toList());
             }
+        } catch (SchedulerException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-            getScheduler().getJobKeys(GroupMatcher.<JobKey>anyGroup()).forEach(jobKey -> {
-                try {
-                    jobDetailDtos.add(newJobDetailDto(getScheduler().getJobDetail(jobKey)));
-                } catch (SchedulerException e) {
-                    throw new RuntimeException(e);
-                }
-            });
-            return jobDetailDtos;
+    @Override
+    public Collection<ExecutingJobDto> getExecutingJobs() {
+        try {
+            return getScheduler().getCurrentlyExecutingJobs()
+                    .stream()
+                    .map(ExecutingJobDto::new)
+                    .collect(toList());
         } catch (SchedulerException e) {
             throw new RuntimeException(e);
         }

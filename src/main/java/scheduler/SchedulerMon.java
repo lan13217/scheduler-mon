@@ -39,6 +39,10 @@ public class SchedulerMon {
         get("/jobs", "application/json", (req, res) -> {
             return getScheduler(req.session()).getJobs(req.params("jobName"));
         }, jsonTransformer);
+
+        get("/executingJobs", "application/json", (req, res) -> {
+            return getScheduler(req.session()).getExecutingJobs();
+        }, jsonTransformer);
     }
 
 

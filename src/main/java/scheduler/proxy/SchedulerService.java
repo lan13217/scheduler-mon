@@ -1,5 +1,6 @@
 package scheduler.proxy;
 
+import scheduler.dto.ExecutingJobDto;
 import scheduler.dto.JobDetailDto;
 import scheduler.dto.TriggerDto;
 
@@ -15,4 +16,6 @@ public interface SchedulerService {
     Collection<TriggerDto> getTriggers(String triggerName);
 
     Collection<JobDetailDto> getJobs(String jobName);
+
+    Collection<ExecutingJobDto> getExecutingJobs();
 }
