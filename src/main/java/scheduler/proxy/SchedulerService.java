@@ -5,11 +5,10 @@ import scheduler.dto.JobDetailDto;
 import scheduler.dto.TriggerDto;
 
 import java.util.Collection;
-import java.util.Properties;
 
 public interface SchedulerService {
 
-    void connect(Properties properties);
+    void connect(String host, Integer port);
 
     void disconnect();
 

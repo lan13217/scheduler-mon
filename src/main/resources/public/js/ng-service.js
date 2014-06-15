@@ -1,4 +1,4 @@
-var myApp = angular.module('myApp', ['ngRoute']);
+var myApp = angular.module('myApp', ['ngRoute', 'ui.bootstrap']);
 myApp.config(['$routeProvider', function($routeProvider) {
     $routeProvider
         .when('/', {
@@ -20,28 +20,28 @@ myApp.service('scheduler', function($http) {
     };
 
     return {
-        connect: function(props, successCallback) {
-            $http.post('http://localhost:4567/connect', props)
+        connect: function(host, port, successCallback) {
+            $http.post('/connect', {'host': host, 'port': port})
                 .success(successCallback)
                 .error(commonErrorHandler);
         },
         disconnect: function(successCallback) {
-            $http.post('http://localhost:4567/disconnect')
+            $http.post('/disconnect')
                 .success(successCallback)
                 .error(commonErrorHandler);
         },
         getTriggers: function(triggerName, successCallback) {
-            $http.get('http://localhost:4567/triggers', {'triggerName': triggerName})
+            $http.get('/triggers', {'triggerName': triggerName})
                 .success(successCallback)
                 .error(commonErrorHandler);
         },
         getJobs: function(jobName, successCallback) {
-            $http.get('http://localhost:4567/jobs', {'jobName': jobName})
+            $http.get('/jobs', {'jobName': jobName})
                 .success(successCallback)
                 .error(commonErrorHandler);
         },
         getExecutingJobs: function(successCallback) {
-            $http.get('http://localhost:4567/executingJobs')
+            $http.get('/executingJobs')
                 .success(successCallback)
                 .error(commonErrorHandler);
         }

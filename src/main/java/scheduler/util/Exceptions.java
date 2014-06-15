@@ -6,7 +6,7 @@ import java.util.function.Function;
 public class Exceptions {
 
     public static <A, R> Function<A, Try<R>> tryOf(ThrowableFunction<A, R> function) {
-        return a -> {
+        return (A a) -> {
             try {
                 return new Success<>(function.apply(a));
             } catch (Exception e) {
@@ -17,7 +17,7 @@ public class Exceptions {
 
     public static <A, R> Function<A, R> catchOf(ThrowableFunction<A, R> function,
                                                 Consumer<Exception> exceptionHandler) {
-        return a -> {
+        return (A a) -> {
             try {
                 return function.apply(a);
             } catch (Exception e) {
@@ -27,7 +27,6 @@ public class Exceptions {
         };
     }
 
-
     @FunctionalInterface
     public static interface ThrowableFunction<A, R> {
         R apply(A a) throws Exception;
@@ -35,11 +34,11 @@ public class Exceptions {
 
     public static interface Try<R> {
         R get();
+        RuntimeException cause();
 
         default boolean isSuccess() {
             return this instanceof Success;
         }
-
         default boolean isFailed() {
             return !isSuccess();
         }
@@ -55,6 +54,11 @@ public class Exceptions {
         public R get() {
             return r;
         }
+
+        @Override
+        public RuntimeException cause() {
+            return null;
+        }
     }
 
     public static class Failure<R> implements Try<R> {
@@ -65,7 +69,12 @@ public class Exceptions {
 
         @Override
         public R get() {
-            return (R) e;
+            throw new RuntimeException(e);
+        }
+
+        @Override
+        public RuntimeException cause() {
+            return new RuntimeException(e);
         }
     }
 }

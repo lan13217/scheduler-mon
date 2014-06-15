@@ -2,14 +2,21 @@
 <html ng-app="myApp">
 <head>
     <title>Scheduler mon</title>
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <link rel="stylesheet" href="css/bootstrap-theme.css">
+    <style>
+        .nav, .pagination, .carousel, .panel-title a { cursor: pointer; }
+    </style>
     <script src="js/jquery-2.1.1.js"></script>
     <script src="js/angular.js"></script>
     <script src="js/angular-route.js"></script>
+    <script src="js/bootstrap.js"></script>
+    <script src="js/ui-bootstrap-tpls-0.11.0.js"></script>
     <script src="js/ng-service.js"></script>
     <script>
     function connectController($scope, $location, scheduler) {
         $scope.connect = function() {
-            scheduler.connect({'host': $scope.host, 'port': $scope.port}, function success(data) {
+            scheduler.connect($scope.host, $scope.port, function success(data) {
                 $location.url('/mon');
             });
         }
@@ -31,37 +38,98 @@
     </script>
 </head>
 <body>
+    <div class="container">
+
     <div id="error"></div>
 
     <div ng-view></div>
 
     <script type="text/ng-template" id="connect">
-        <h3>Welcome to scheduler mon.</h3>
-        <form name="form">
+        <form name="form" class="form-horizontal" role="form">
             <div>
-                <label for="host">host</label>
-                <input type="text" id="host" name="host" ng-model="host"/>
-            </div>
-            <div>
-                <label for="port">port</label>
-                <input type="text" id="port" name="port" ng-model="port"/>
-            </div>
-            <div>
-                <input type="button" name="submit" value="Connect" ng-click="connect()"/>
+                <div class="form-group">
+                    <h3>Welcome to scheduler mon.</h3>
+                </div>
+                <div class="form-group">
+                    <label class="col-xs-2" for="host">host</label>
+                    <input type="text" id="host" name="host" ng-model="host" class="col-sm-3 form-control"/>
+                </div>
+                <div class="form-group">
+                    <label class="col-xs-2" for="port">port</label>
+                    <input type="text" id="port" name="port" ng-model="port" class="col-sm-3 form-control"/>
+                </div>
+                <div class="form-actions">
+                    <input type="button" class="btn btn-primary" name="submit" value="Connect" ng-click="connect()"/>
+                </div>
             </div>
         </form>
     </script>
 
     <script type="text/ng-template" id="mon">
-        <h3>Monitoring scheduler</h3>
-        <form name="form">
-            <div>
-                {{triggers}}
-            </div>
-            <div>
-                {{jobs}}
-            </div>
-        </form>
+        <h2>Scheduler monitoring console</h2>
+        <div class="row">
+            <tabset>
+                <tab heading="monitoring">
+                    <form name="form">
+                        <h3>Triggers</h3>
+                        <div class="row">
+                            <table id="triggers-table" class="table table-bordered">
+                                <thead>
+                                <tr>
+                                    <th>Group</th>
+                                    <th>Name</th>
+                                    <th>Previous fire time</th>
+                                    <th>Next fire time</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr ng-repeat="trigger in triggers">
+                                    <td>{{trigger.group}}</td>
+                                    <td>{{trigger.name}}</td>
+                                    <td>{{trigger.previousFireTime}}</td>
+                                    <td>{{trigger.nextFireTime}}</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="row">
+                            <table id="executing-jobs-table" class="table table-bordered">
+
+                            </table>
+                            {{executingJobs}}
+                        </div>
+                    </form>
+                </tab>
+                <tab heading="configuration">
+                    <form name="form">
+                        <h3>Jobs</h3>
+                        <div class="row">
+                            <table id="jobs-table" class="table table-bordered">
+                                <thead>
+                                <tr>
+                                    <th>Group</th>
+                                    <th>Name</th>
+                                    <th>Job class name</th>
+                                    <th>Job data map</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr ng-repeat="job in jobs">
+                                    <td>{{job.group}}</td>
+                                    <td>{{job.name}}</td>
+                                    <td>{{job.jobClassName}}</td>
+                                    <td>{{job.jobDataMap}}</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </form>
+                </tab>
+            </tabset>
+        </div>
+
     </script>
+    </div>
 </body>
 </html>
