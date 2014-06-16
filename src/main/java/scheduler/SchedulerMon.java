@@ -2,7 +2,12 @@ package scheduler;
 
 import com.google.gson.Gson;
 import scheduler.dto.Success;
+import scheduler.dto.TimelineJobDto;
 import scheduler.util.JsonTransformer;
+
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 import static java.lang.Integer.parseInt;
 import static java.lang.String.valueOf;
@@ -40,5 +45,11 @@ public class SchedulerMon {
 
         get("/executingJobs", "application/json", (req, res) -> getScheduler(req.session())
                 .getExecutingJobs(), jsonTransformer);
+
+        get("/timeline", "application/json", (req, res) -> {
+            Map<String, Object> timelineMap = new HashMap<>();
+            timelineMap.put("events", getScheduler(req.session()).getTimelineJobs());
+            return timelineMap;
+        }, jsonTransformer);
     }
 }

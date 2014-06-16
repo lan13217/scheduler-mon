@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.Properties;
 
+import static org.quartz.CronScheduleBuilder.cronSchedule;
 import static org.quartz.SimpleScheduleBuilder.simpleSchedule;
 
 public class SchedulerTestRunner {
@@ -37,10 +38,20 @@ public class SchedulerTestRunner {
                     .withIdentity("testTrigger")
                     .withSchedule(simpleSchedule()
                             .repeatForever()
-                            .withIntervalInSeconds(10)
+                            .withIntervalInSeconds(5)
                             .withMisfireHandlingInstructionIgnoreMisfires()).build();
 
+            JobDetail job2 = JobBuilder.newJob()
+                    .withIdentity("testJob2")
+                    .ofType(DummyJob.class)
+                    .build();
+
+            Trigger trigger2 = TriggerBuilder.newTrigger()
+                    .withIdentity("testTrigger2")
+                    .withSchedule(cronSchedule("0 0/10 2-3 * * ?")).build();
+
             scheduler.scheduleJob(job, trigger);
+            scheduler.scheduleJob(job2, trigger2);
 
         } catch (SchedulerException e) {
             e.printStackTrace();

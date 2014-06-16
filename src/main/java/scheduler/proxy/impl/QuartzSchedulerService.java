@@ -5,11 +5,15 @@ import org.quartz.impl.StdSchedulerFactory;
 import org.quartz.impl.matchers.GroupMatcher;
 import scheduler.dto.ExecutingJobDto;
 import scheduler.dto.JobDetailDto;
+import scheduler.dto.TimelineJobDto;
 import scheduler.dto.TriggerDto;
 import scheduler.proxy.SchedulerService;
 import scheduler.util.Exceptions;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.Date;
+import java.util.List;
 import java.util.Properties;
 
 import static com.google.common.collect.Lists.newArrayList;
@@ -96,6 +100,35 @@ public class QuartzSchedulerService implements SchedulerService {
         }
     }
 
+    @Override
+    public Collection<TimelineJobDto> getTimelineJobs() {
+        Collection<TriggerDto> triggers = getTriggers(null);
+        Collection<ExecutingJobDto> executingJobs = getExecutingJobs();
+
+        List<TimelineJobDto> dtos = newArrayList();
+        for (TriggerDto trigger : triggers) {
+            TimelineJobDto triggerTimeline = new TimelineJobDto(
+                    trigger.getNextFireTime(), null, false, trigger.getName(), null, null);
+            dtos.add(triggerTimeline);
+
+            for (ExecutingJobDto executingJob : executingJobs) {
+                if (executingJob.hasSameTrigger(trigger)) {
+
+                    Date endTime = null;
+                    if (!executingJob.isRunning()) {
+                        endTime = Date.from(executingJob.getFireTime().toInstant().plusMillis(executingJob.getJobRunTime()));
+                    }
+
+                    TimelineJobDto executingTimeline = new TimelineJobDto(
+                            executingJob.getFireTime(), endTime, executingJob.isRunning(), executingJob.getTriggerName(),
+                            null, null);
+                    dtos.add(executingTimeline);
+                }
+            }
+        }
+        return dtos;
+    }
+
     private Scheduler getScheduler() {
         if (scheduler == null) {
             throw new RuntimeException("Scheduler is not running. Try to reconnect the Scheduler with properties");
@@ -118,5 +151,4 @@ public class QuartzSchedulerService implements SchedulerService {
                 trigger.getPreviousFireTime(),
                 trigger.getNextFireTime());
     }
-
 }

@@ -13,6 +13,7 @@
     <script src="js/bootstrap.js"></script>
     <script src="js/ui-bootstrap-tpls-0.11.0.js"></script>
     <script src="js/ng-service.js"></script>
+    <script src="js/timeline/timeline-api.js"></script>
     <script>
     function connectController($scope, $location, scheduler) {
         $scope.connect = function() {
@@ -22,7 +23,7 @@
         }
     }
 
-    function monController($scope, scheduler) {
+    function monController($scope, scheduler, $interval) {
         scheduler.getTriggers(null, function success(data) {
             $scope.triggers = data;
         });
@@ -34,6 +35,34 @@
         scheduler.getExecutingJobs(function success(data) {
             $scope.executingJobs = data;
         });
+
+        $interval(function() {
+            loadTimeline();
+        }, 1000, 0);
+
+        function loadTimeline() {
+            var eventSource = new Timeline.DefaultEventSource();
+            var bandInfos = [
+                Timeline.createBandInfo({
+                    eventSource:    eventSource,
+                    date:           new Date().toString(),
+                    width:          "70%",
+                    intervalUnit:   Timeline.DateTime.HOUR,
+                    intervalPixels: 100
+                }),
+                Timeline.createBandInfo({
+                    eventSource:    eventSource,
+                    date:           new Date().toString(),
+                    width:          "30%",
+                    intervalUnit:   Timeline.DateTime.DAY,
+                    intervalPixels: 200
+                })
+            ];
+            bandInfos[1].syncWith = 0;
+            bandInfos[1].highlight = true;
+            Timeline.create(document.getElementById("schedule-timeline"), bandInfos);
+            Timeline.loadJSON('/timeline', function(data, url) { eventSource.loadJSON(data, url); });
+        }
     }
     </script>
 </head>
@@ -71,6 +100,7 @@
             <tabset>
                 <tab heading="monitoring">
                     <form name="form">
+                        <div id="schedule-timeline" style="height: 350px; margin-top: 20px; margin-bottom: 50px;"></div>
                         <h3>Triggers</h3>
                         <div class="row">
                             <table id="triggers-table" class="table table-bordered">

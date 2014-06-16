@@ -9,7 +9,6 @@ import spark.Session;
 
 import java.util.Map;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 
 public class SchedulerSupport {
 
@@ -35,9 +34,8 @@ public class SchedulerSupport {
     
     public static Route fromJson(BiFunction<Map<String, String>, Response, Object> function) {
         return (req, res) -> {
-                Map params = new Gson().fromJson(req.body(), Map.class);
-                return function.apply(params, res);
-            };
-        }
+            Map params = new Gson().fromJson(req.body(), Map.class);
+            return function.apply(params, res);
+        };
     }
 }
