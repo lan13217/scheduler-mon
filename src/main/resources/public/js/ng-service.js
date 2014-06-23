@@ -44,6 +44,11 @@ myApp.service('scheduler', function($http) {
             $http.get('/executingJobs')
                 .success(successCallback)
                 .error(commonErrorHandler);
+        },
+        getTimeline: function(successCallback) {
+            $http.get('/timeline')
+                .success(successCallback)
+                .error(commonErrorHandler);
         }
     }
 });

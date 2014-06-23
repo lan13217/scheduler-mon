@@ -3,20 +3,33 @@ package scheduler.dto;
 import java.util.Date;
 
 public class TimelineJobDto {
-    private Date start;
-    private Date end;
-    private boolean isDuration;
-    private String title;
-    private String image;
-    private String link;
 
-    public TimelineJobDto(Date start, Date end, boolean isDuration, String title, String image, String link) {
+    private final int id;
+    private final String group;
+    private final String content;
+    private final Date start;
+    private final Date end;
+    private final String type;
+
+    public TimelineJobDto(int id, String group, String content, Date start, Date end, String type) {
+        this.id = id;
+        this.group = group;
+        this.content = content;
         this.start = start;
         this.end = end;
-        this.isDuration = isDuration;
-        this.title = title;
-        this.image = image;
-        this.link = link;
+        this.type = type;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public String getGroup() {
+        return group;
+    }
+
+    public String getContent() {
+        return content;
     }
 
     public Date getStart() {
@@ -27,19 +40,7 @@ public class TimelineJobDto {
         return end;
     }
 
-    public boolean isDuration() {
-        return isDuration;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public String getImage() {
-        return image;
-    }
-
-    public String getLink() {
-        return link;
+    public String getType() {
+        return type;
     }
 }

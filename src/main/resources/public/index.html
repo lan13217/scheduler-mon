@@ -2,18 +2,19 @@
 <html ng-app="myApp">
 <head>
     <title>Scheduler mon</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="css/bootstrap.css">
     <link rel="stylesheet" href="css/bootstrap-theme.css">
-    <style>
-        .nav, .pagination, .carousel, .panel-title a { cursor: pointer; }
-    </style>
+    <link rel="stylesheet" href="css/vis.css" />
     <script src="js/jquery-2.1.1.js"></script>
     <script src="js/angular.js"></script>
     <script src="js/angular-route.js"></script>
     <script src="js/bootstrap.js"></script>
     <script src="js/ui-bootstrap-tpls-0.11.0.js"></script>
     <script src="js/ng-service.js"></script>
-    <script src="js/timeline/timeline-api.js"></script>
+    <script src="js/vis.js"></script>
     <script>
     function connectController($scope, $location, scheduler) {
         $scope.connect = function() {
@@ -23,7 +24,7 @@
         }
     }
 
-    function monController($scope, scheduler, $interval) {
+    function monController($scope, scheduler, $interval, $timeout) {
         scheduler.getTriggers(null, function success(data) {
             $scope.triggers = data;
         });
@@ -36,32 +37,41 @@
             $scope.executingJobs = data;
         });
 
-        $interval(function() {
-            loadTimeline();
-        }, 1000, 0);
+        var items;
+        var timeline;
 
-        function loadTimeline() {
-            var eventSource = new Timeline.DefaultEventSource();
-            var bandInfos = [
-                Timeline.createBandInfo({
-                    eventSource:    eventSource,
-                    date:           new Date().toString(),
-                    width:          "70%",
-                    intervalUnit:   Timeline.DateTime.HOUR,
-                    intervalPixels: 100
-                }),
-                Timeline.createBandInfo({
-                    eventSource:    eventSource,
-                    date:           new Date().toString(),
-                    width:          "30%",
-                    intervalUnit:   Timeline.DateTime.DAY,
-                    intervalPixels: 200
-                })
-            ];
-            bandInfos[1].syncWith = 0;
-            bandInfos[1].highlight = true;
-            Timeline.create(document.getElementById("schedule-timeline"), bandInfos);
-            Timeline.loadJSON('/timeline', function(data, url) { eventSource.loadJSON(data, url); });
+        $timeout(function() {
+            scheduler.getTimeline(function success(timelines) {
+                scheduler.getJobs(null, function success(jobs) {
+                    loadTimeline(jobs, timelines);
+                });
+            });
+        });
+
+        function loadTimeline(jobs, timelines) {
+          var groupId = 0;
+          var groups = new vis.DataSet();
+          _.each(jobs, function(job) {
+            groups.add({id: ++groupId, content: job.name});
+          });
+
+          items = new vis.DataSet(timelines);
+          var container = document.getElementById('schedule-timeline');
+          var options = {
+            showCurrentTime: true,
+            start: new Date(Date.now() - 1000 * 60 * 60 * 24),
+            height: '300px',
+            min: new Date(2014, 5, 1),                // lower limit of visible range
+            max: new Date(2015, 0, 1),                // upper limit of visible range
+            zoomMin: 1000 * 60 * 60,                  // one hour in milliseconds
+            zoomMax: 1000 * 60 * 60 * 24 * 31 * 3     // about three months in milliseconds
+          };
+
+          // create the timeline
+          timeline = new vis.Timeline(container);
+          timeline.setOptions(options);
+          timeline.setGroups(groups);
+          timeline.setItems(items);
         }
     }
     </script>
@@ -100,7 +110,7 @@
             <tabset>
                 <tab heading="monitoring">
                     <form name="form">
-                        <div id="schedule-timeline" style="height: 350px; margin-top: 20px; margin-bottom: 50px;"></div>
+                        <div id="schedule-timeline" style="height: 400px; margin-top: 20px; margin-bottom: 50px;"></div>
                         <h3>Triggers</h3>
                         <div class="row">
                             <table id="triggers-table" class="table table-bordered">

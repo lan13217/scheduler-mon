@@ -102,30 +102,25 @@ public class QuartzSchedulerService implements SchedulerService {
 
     @Override
     public Collection<TimelineJobDto> getTimelineJobs() {
-        Collection<TriggerDto> triggers = getTriggers(null);
+        Collection<JobDetailDto> jobs = getJobs(null);
         Collection<ExecutingJobDto> executingJobs = getExecutingJobs();
 
         List<TimelineJobDto> dtos = newArrayList();
-        for (TriggerDto trigger : triggers) {
-            TimelineJobDto triggerTimeline = new TimelineJobDto(
-                    trigger.getNextFireTime(), null, false, trigger.getName(), null, null);
-            dtos.add(triggerTimeline);
-
-            for (ExecutingJobDto executingJob : executingJobs) {
-                if (executingJob.hasSameTrigger(trigger)) {
-
-                    Date endTime = null;
-                    if (!executingJob.isRunning()) {
-                        endTime = Date.from(executingJob.getFireTime().toInstant().plusMillis(executingJob.getJobRunTime()));
-                    }
-
-                    TimelineJobDto executingTimeline = new TimelineJobDto(
-                            executingJob.getFireTime(), endTime, executingJob.isRunning(), executingJob.getTriggerName(),
-                            null, null);
-                    dtos.add(executingTimeline);
+        int i = 0;
+        for (JobDetailDto job : jobs) {
+            try {
+                List<? extends Trigger> triggers = getScheduler().getTriggersOfJob(
+                        new JobKey(job.getName(), job.getGroup()));
+                for (Trigger trigger : triggers) {
+                    dtos.add(new TimelineJobDto(++i, job.getName(),
+                            trigger.getKey().getGroup() + "-" + trigger.getKey().getName(),
+                            trigger.getNextFireTime(), null, "box"));
                 }
+            } catch (SchedulerException e) {
+                e.printStackTrace();
             }
         }
+
         return dtos;
     }
 

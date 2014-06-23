@@ -46,10 +46,7 @@ public class SchedulerMon {
         get("/executingJobs", "application/json", (req, res) -> getScheduler(req.session())
                 .getExecutingJobs(), jsonTransformer);
 
-        get("/timeline", "application/json", (req, res) -> {
-            Map<String, Object> timelineMap = new HashMap<>();
-            timelineMap.put("events", getScheduler(req.session()).getTimelineJobs());
-            return timelineMap;
-        }, jsonTransformer);
+        get("/timeline", "application/json", (req, res) -> getScheduler(req.session())
+                .getTimelineJobs(), jsonTransformer);
     }
 }
