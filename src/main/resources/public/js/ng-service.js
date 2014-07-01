@@ -30,13 +30,19 @@ myApp.service('scheduler', function($http) {
                 .success(successCallback)
                 .error(commonErrorHandler);
         },
-        getTriggers: function(triggerName, successCallback) {
-            $http.get('/triggers', {'triggerName': triggerName})
+        getSchedulers: function(successCallback) {
+            $http.get('/schedulers')
                 .success(successCallback)
                 .error(commonErrorHandler);
         },
-        getJobs: function(jobName, successCallback) {
-            $http.get('/jobs', {'jobName': jobName})
+        getTriggers: function(triggerName, successCallback) {
+            var triggersUrl = triggerName ? '/triggers/' + triggerName : '/triggers';
+            $http.get(triggersUrl)
+                .success(successCallback)
+                .error(commonErrorHandler);
+        },
+        getJobs: function(successCallback) {
+            $http.get('/jobs')
                 .success(successCallback)
                 .error(commonErrorHandler);
         },

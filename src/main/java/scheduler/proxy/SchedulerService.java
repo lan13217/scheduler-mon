@@ -1,9 +1,6 @@
 package scheduler.proxy;
 
-import scheduler.dto.ExecutingJobDto;
-import scheduler.dto.JobDetailDto;
-import scheduler.dto.TimelineJobDto;
-import scheduler.dto.TriggerDto;
+import scheduler.dto.*;
 
 import java.util.Collection;
 
@@ -12,6 +9,8 @@ public interface SchedulerService {
     void connect(String host, Integer port);
 
     void disconnect();
+
+    Collection<SchedulerDto> getSchedulers();
 
     Collection<TriggerDto> getTriggers(String triggerName);
 

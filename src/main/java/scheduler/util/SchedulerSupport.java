@@ -32,10 +32,10 @@ public class SchedulerSupport {
         return scheduler;
     }
     
-    public static Route fromJson(BiFunction<Map<String, String>, Response, Object> function) {
+    public static Route fromJson(RequestJsonProvider jsonProvider) {
         return (req, res) -> {
             Map params = new Gson().fromJson(req.body(), Map.class);
-            return function.apply(params, res);
+            return jsonProvider.apply(params, req, res);
         };
     }
 }

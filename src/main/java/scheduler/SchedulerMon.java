@@ -32,16 +32,22 @@ public class SchedulerMon {
             res.body("<b>" + e.getMessage() + "</b>");
         });
 
-        post("/connect", "application/json", (req, res) -> fromJson((params, response) -> {
+        post("/connect", "application/json", fromJson((params, req, res) -> {
             bind(req.session(), connect(valueOf(params.get("host")), parseInt(valueOf(params.get("port")))));
             return new Success();
-        }).handle(req, res), jsonTransformer);
+        }), jsonTransformer);
 
-        get("/triggers", "application/json", (req, res) -> getScheduler(req.session())
+        get("/schedulers", "application/json", (req, res) -> getScheduler(req.session())
+                .getSchedulers(), jsonTransformer);
+
+        get("/triggers/:triggerName", "application/json", (req, res) -> getScheduler(req.session())
                 .getTriggers(req.params("triggerName")), jsonTransformer);
 
+        get("/triggers", "application/json", (req, res) -> getScheduler(req.session())
+                .getTriggers(null), jsonTransformer);
+
         get("/jobs", "application/json", (req, res) -> getScheduler(req.session())
-                .getJobs(req.params("jobName")), jsonTransformer);
+                .getJobs(null), jsonTransformer);
 
         get("/executingJobs", "application/json", (req, res) -> getScheduler(req.session())
                 .getExecutingJobs(), jsonTransformer);

@@ -3,52 +3,49 @@ package scheduler.proxy.impl;
 import org.quartz.*;
 import org.quartz.impl.StdSchedulerFactory;
 import org.quartz.impl.matchers.GroupMatcher;
-import scheduler.dto.ExecutingJobDto;
-import scheduler.dto.JobDetailDto;
-import scheduler.dto.TimelineJobDto;
-import scheduler.dto.TriggerDto;
+import scheduler.dto.*;
 import scheduler.proxy.SchedulerService;
-import scheduler.util.Exceptions;
 
-import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static java.util.stream.Collectors.toList;
-import static scheduler.util.Exceptions.Try;
 import static scheduler.util.Exceptions.catchOf;
 import static scheduler.util.Exceptions.tryOf;
 
 public class QuartzSchedulerService implements SchedulerService {
 
     private Scheduler scheduler;
+    private Collection<Scheduler> schedulers = new ArrayList<>();
+    private StdSchedulerFactory schedulerFactory;
 
+    public QuartzSchedulerService() {
+        this.schedulerFactory = new StdSchedulerFactory();
+    }
 
     @Override
     public void connect(String host, Integer port) {
-
-        Properties properties = new Properties();
-        properties.setProperty("org.quartz.scheduler.instanceName", "RmiQuartzScheduler");
-        properties.setProperty("org.quartz.scheduler.instanceId", "NON_CLUSTERED");
-        properties.setProperty("org.quartz.scheduler.rmi.proxy", "true");
-        properties.setProperty("org.quartz.scheduler.rmi.registryHost", host);
-        properties.setProperty("org.quartz.scheduler.rmi.registryPort", port.toString());
-
-        Try<Scheduler> aTry = tryOf((Properties p) -> new StdSchedulerFactory(p).getScheduler())
-                .apply(properties);
-        if (aTry.isSuccess()) {
-            scheduler = aTry.get();
-        } else {
-            throw aTry.cause();
+        try {
+            schedulerFactory.initialize(getProperties(host, port));
+            this.schedulers = schedulerFactory.getAllSchedulers();
+            this.scheduler = schedulerFactory.getScheduler();
+        } catch (SchedulerException e) {
+            throw new RuntimeException(e);
         }
     }
 
     @Override
     public void disconnect() {
         scheduler = null;
+    }
+
+    @Override
+    public Collection<SchedulerDto> getSchedulers() {
+        return schedulers.stream().map(SchedulerDto::new).collect(Collectors.toList());
     }
 
     @Override
@@ -106,14 +103,13 @@ public class QuartzSchedulerService implements SchedulerService {
         Collection<ExecutingJobDto> executingJobs = getExecutingJobs();
 
         List<TimelineJobDto> dtos = newArrayList();
-        int i = 0;
         for (JobDetailDto job : jobs) {
             try {
                 List<? extends Trigger> triggers = getScheduler().getTriggersOfJob(
                         new JobKey(job.getName(), job.getGroup()));
                 for (Trigger trigger : triggers) {
-                    dtos.add(new TimelineJobDto(++i, job.getName(),
-                            trigger.getKey().getGroup() + "-" + trigger.getKey().getName(),
+                    dtos.add(new TimelineJobDto(job.getName(),
+                            trigger.getKey().getName(),
                             trigger.getNextFireTime(), null, "box"));
                 }
             } catch (SchedulerException e) {
@@ -145,5 +141,15 @@ public class QuartzSchedulerService implements SchedulerService {
                 trigger.getDescription(),
                 trigger.getPreviousFireTime(),
                 trigger.getNextFireTime());
+    }
+
+    private Properties getProperties(String host, Integer port) {
+        Properties properties = new Properties();
+        properties.setProperty("org.quartz.scheduler.instanceName", "RmiQuartzScheduler");
+        properties.setProperty("org.quartz.scheduler.instanceId", "NON_CLUSTERED");
+        properties.setProperty("org.quartz.scheduler.rmi.proxy", "true");
+        properties.setProperty("org.quartz.scheduler.rmi.registryHost", host);
+        properties.setProperty("org.quartz.scheduler.rmi.registryPort", port.toString());
+        return properties;
     }
 }
