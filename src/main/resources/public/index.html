@@ -15,7 +15,7 @@
             overflow: auto;
         }
         .scheduler-timeline-container {
-            height: 400px;
+            height: 500px;
             margin-top: 20px;
             margin-bottom: 50px;
         }
@@ -24,123 +24,22 @@
     <script src="js/angular.js"></script>
     <script src="js/angular-route.js"></script>
     <script src="js/bootstrap.js"></script>
+    <script src="js/tooltip.js"></script>
+    <script src="js/popover.js"></script>
     <script src="js/underscore-1.6.0.js"></script>
     <script src="js/ui-bootstrap-tpls-0.11.0.js"></script>
     <script src="js/ng-service.js"></script>
     <script src="js/vis.js"></script>
+    <script src="js/moment.js"></script>
     <script>
-    function connectController($scope, $location, scheduler) {
-        $scope.connect = function() {
-            scheduler.connect($scope.host, $scope.port, function success(data) {
-                $location.url('/mon');
-            });
-        }
-    }
-
-    function monController($scope, scheduler, $interval, $timeout, $compile) {
-        scheduler.getTriggers(null, function success(data) {
-            $scope.triggers = data;
+    //tooltip
+    $(document).ready(function() {
+        $('body').popover({
+            placement: 'auto',
+            trigger: 'hover',
+            selector: '[rel=popover]'
         });
-
-        scheduler.getJobs(function success(data) {
-            $scope.jobs = data;
-        });
-
-        scheduler.getExecutingJobs(function success(data) {
-            $scope.executingJobs = data;
-        });
-
-        var items;
-        var timeline;
-
-        $timeout(function() {
-            scheduler.getTimeline(function success(timelines) {
-                scheduler.getJobs(function success(jobs) {
-                    loadTimeline(jobs, timelines);
-                });
-            });
-
-            scheduler.getSchedulers(function success(schedulers) {
-                schedulerGraph(schedulers);
-            });
-        });
-
-        $interval(function() {
-//            items.add({});
-        }, 10000);
-
-        $scope.showTriggerDetails = function(triggerName) {
-            scheduler.getTriggers(triggerName, function success(data) {
-                $scope.triggerDetails = data[0];
-                $('#triggerDetails').modal();
-            });
-        };
-
-        function loadTimeline(jobs, timelines) {
-            var groupId = 0;
-            var groups = new vis.DataSet();
-            _.each(jobs, function(job) {
-                groups.add({id: ++groupId, content: job.name});
-            });
-
-            function findGroupId(jobName) {
-                return _.find(groups.get(), function(group) { return group.content === jobName});
-            }
-
-            var itemId = 0;
-            items = new vis.DataSet();
-            _.each(timelines, function(item) {
-                var group = findGroupId(item.group);
-                items.add({id: ++itemId,
-                    group: group ? group.id : -1,
-                    content: '<span ng-click="showTriggerDetails(\'' + item.content + '\')">' + item.content + '</span>',
-                    start: item.start, end: item.end,
-                    type: item.type});
-            });
-
-            var container = document.getElementById('schedule-timeline');
-            var options = {
-                showCurrentTime: true,
-                start: new Date(Date.now() - 1000 * 60 * 60 * 24),
-                height: '300px',
-                min: new Date(2014, 5, 1),                // lower limit of visible range
-                max: new Date(2015, 0, 1),                // upper limit of visible range
-                zoomMin: 1000 * 60 * 60,                  // one hour in milliseconds
-                zoomMax: 1000 * 60 * 60 * 24 * 31 * 3     // about three months in milliseconds
-            };
-
-            // create the timeline
-            timeline = new vis.Timeline(container);
-            timeline.setOptions(options);
-            timeline.setGroups(groups);
-            timeline.setItems(items);
-
-            $compile(container)($scope);
-        }
-
-        function schedulerGraph(schedulers) {
-          var nodes = [];
-          var edges = [];
-
-          var idx = 0;
-          nodes.push({id: ++idx, label: 'scheduler mon', group: 'console'});
-          _.each(schedulers, function(scheduler) {
-            var identifier = ++idx;
-            nodes.push({id: identifier, label: scheduler.name + '\n' + scheduler.instanceId, group: 'scheduler', shape: 'box', value: scheduler.executingJobs});
-            edges.push({from: 1, to: identifier, color: 'gray', style: 'arrow', length: 200, width: 2});
-          });
-
-          var container = document.getElementById('schedule-instance');
-          var data = {
-            nodes: nodes,
-            edges: edges
-          };
-          var options = {
-
-          };
-          graph = new vis.Graph(container, data, options);
-        }
-    }
+    });
     </script>
 </head>
 <body>
@@ -179,6 +78,7 @@
                     <form name="form">
                         <div id="schedule-instance" class="scheduler-instance-container"></div>
                         <div id="schedule-timeline" class="scheduler-timeline-container"></div>
+
                         <h3>Triggers</h3>
                         <div class="row">
                             <table id="triggers-table" class="table table-bordered">
