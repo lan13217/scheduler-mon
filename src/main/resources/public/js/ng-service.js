@@ -80,11 +80,13 @@ myApp
 
     var items;
     var timeline;
+    var groups;
 
     $timeout(function() {
         scheduler.getTriggers(function success(triggers) {
             scheduler.getJobs(function success(jobs) {
-                loadTimeline(jobs, triggers);
+                groups = loadGroups(jobs);
+                loadTimeline(groups, triggers);
             });
         });
 
@@ -94,40 +96,70 @@ myApp
     });
 
     $interval(function() {
+        function findItem(name) {
+            var itms = items.get({
+            filter: function (item) {
+                return item.name == name;
+              }
+            });
+
+            return itms ? _.last(itms) : undefined;
+        }
+
         var itemId = _.last(items.getIds());
-//            items.add({id: ++itemId, group: 1, content: 'content', start: new Date(), end: moment().endOf('hour').fromNow(), type: 'box'});
+        scheduler.getTriggers(function success(triggers) {
+            _.each(triggers, function(trigger) {
+                var item = findItem(trigger.name);
+                if (item && item.start != trigger.nextFireTime) {
+                    var triggerId = ++itemId;
+                    items.add({id: triggerId,
+                        group: groups.findGroupId(trigger.group),
+                        content: trigger.name,
+                        content: '<span id="trigger-' + triggerId + '" rel="popover" data-toggle="popover" title="' + trigger.name +
+                            '" data-content="' + getContent(trigger) + '" >' + trigger.name + '</span>',
+                        name: trigger.name,
+                        start: trigger.nextFireTime ? trigger.nextFireTime : null,
+                        type: 'point'
+                    });
+                }
+            });
+        });
     }, 5000);
 
-    function loadTimeline(jobs, triggers) {
+    function loadGroups(jobs) {
         var groupId = 0;
         var groups = new vis.DataSet();
         _.each(jobs, function(job) {
             groups.add({id: ++groupId, content: job.name});
         });
 
-        function findGroupId(jobName) {
-            return _.find(groups.get(), function(group) { return group.content === jobName});
-        }
+        return {
+            val: groups,
+            findGroupId: function (jobName) {
+                var found = _.find(groups.get(), function(group) { return group.content === jobName});
+                return found ? found.id : -1;
+            }
+        };
+    }
 
-        function getContent(trigger) {
-            var group = trigger.group || '';
-            var name = trigger.name || '';
-            var previousFireTime = trigger.previousFireTime || '';
-            var nextFireTime = trigger.nextFireTime || '';
-            return 'prev:' + previousFireTime + '\n'
-                 + 'next:' + nextFireTime;
-        }
+    function getContent(trigger) {
+        var previousFireTime = trigger.previousFireTime || '';
+        var nextFireTime = trigger.nextFireTime || '';
+        return 'prev:' + previousFireTime + '\n'
+             + 'next:' + nextFireTime;
+    }
 
+    function loadTimeline(groups, triggers) {
         var itemId = 0;
         items = new vis.DataSet();
         _.each(triggers, function(trigger) {
-            var group = findGroupId(trigger.group);
             var triggerId = ++itemId;
             items.add({
                 id: triggerId,
-                group: group ? group.id : -1,
+                group: groups.findGroupId(trigger.group),
                 content: '<span id="trigger-' + triggerId + '" rel="popover" data-toggle="popover" title="' + trigger.name +
                 '" data-content="' + getContent(trigger) + '" >' + trigger.name + '</span>',
+                name: trigger.name,
                 start: trigger.nextFireTime, type: 'point'});
         });
 
@@ -138,6 +170,8 @@ myApp
 
         var options = {
             showCurrentTime: true,
+            autoResize: false,
+            stack: true,
             start: new Date(Date.now() - 1000 * 60 * 60),
             height: '100%',
             min: minDate,                // lower limit of visible range
@@ -149,7 +183,7 @@ myApp
         // create the timeline
         timeline = new vis.Timeline(container);
         timeline.setOptions(options);
-        timeline.setGroups(groups);
+        timeline.setGroups(groups.val);
         timeline.setItems(items);
     }
 
