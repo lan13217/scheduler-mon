@@ -1,13 +1,12 @@
 package scheduler;
 
 import com.google.gson.Gson;
+
 import scheduler.dto.Success;
 import scheduler.util.JsonTransformer;
-
 import static java.lang.Integer.parseInt;
 import static java.lang.String.valueOf;
 import static scheduler.util.SchedulerSupport.*;
-import static scheduler.util.SchedulerSupport.connect;
 import static spark.Spark.*;
 import static spark.SparkBase.setPort;
 import static spark.SparkBase.staticFileLocation;

@@ -27,6 +27,7 @@ public class SchedulerTestRunner {
                     .withIdentity("testJob")
                     .ofType(DummyJob.class)
                     .build();
+            job.getJobDataMap().put("say", "hello testJob!");
 
             Trigger trigger = TriggerBuilder.newTrigger()
                     .withIdentity("testTrigger")
@@ -44,10 +45,10 @@ public class SchedulerTestRunner {
                     .withIdentity("testJob2")
                     .ofType(DummyJob.class)
                     .build();
-
+            job2.getJobDataMap().put("say", "hello testJob2!");
             Trigger trigger2 = TriggerBuilder.newTrigger()
                     .withIdentity("testTrigger2")
-                    .withSchedule(cronSchedule("0 0/10 2-3 * * ?")).build();
+                    .withSchedule(cronSchedule("0/10 * * * * ?")).build();
 
             scheduler.scheduleJob(job, Sets.newHashSet(trigger, trigger10), true);
             scheduler.scheduleJob(job2, trigger2);
